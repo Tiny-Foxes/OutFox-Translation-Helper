@@ -2,6 +2,7 @@ package com.tinyfoxes.translationhelper
 
 import com.tinyfoxes.translationhelper.util.Util
 import com.tinyfoxes.translationhelper.model.TranslationString
+import com.tinyfoxes.translationhelper.ui.UiMain
 import com.tinyfoxes.translationhelper.util.AppPreferences
 import com.tinyfoxes.translationhelper.util.initTranslations
 import com.tinyfoxes.translationhelper.util.s
@@ -46,6 +47,7 @@ fun startMenu() {
         2) ${s("[cli]Check for non-translated keys")}
         3) ${s("[cli]Check app settings")}
         4) ${s("[cli]Edit app settings")}
+        5) ${s("[cli]Open UI")}
     """.trimIndent()
     )
     val input = readln()
@@ -56,9 +58,14 @@ fun startMenu() {
             2 -> checkForNonTranslatedKeys()
             3 -> checkAppSettings()
             4 -> editAppSettings()
+            5 -> openUI()
             else -> println(s("[cli]Number not found"))
         }
     }
+}
+
+private fun openUI() {
+    UiMain()
 }
 
 fun askRootFolder(): File? {
@@ -91,14 +98,16 @@ fun askLangCode(prompt: String): String? {
     return langCode
 }
 
-fun askAppLanguage() : String? {
+fun askAppLanguage(): String? {
     println("[cli]Please select a language;")
     println("[cli]Fill in one of the following languages codes:")
-    println("""
+    println(
+        """
         en
         nl
         pt-br
-    """.trimIndent())
+    """.trimIndent()
+    )
     println("[cli]Or leave empty to cancel")
     val langCode = readln().lowercase()
     if (!"(en|nl|pt\\-br)".toRegex().matches(langCode)) {
