@@ -28,12 +28,13 @@ class UiMain {
 
     private fun initUI() {
         try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName())
         } catch (e: Exception) {
             //ignore
         }
         frame = JFrame()
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
+        frame.size = Dimension(600, 400)
         initMenu()
         initBody()
         frame.isVisible = true
@@ -43,7 +44,7 @@ class UiMain {
     private fun initMenu() {
         val menuBar = JMenuBar()
         //
-        val fileMenu = JMenu()
+        val fileMenu = JMenu(s("[ui]File"))
         val fileOpenFolderItem = JMenuItem(s("[ui]Open root folder"))
         fileOpenFolderItem.addActionListener { openFolder() }
         fileMenu.add(fileOpenFolderItem)
@@ -61,7 +62,6 @@ class UiMain {
         fileMenu.add(fileExitItem)
         menuBar.add(fileMenu)
         //
-        frame.size = Dimension(600, 400)
         frame.jMenuBar = menuBar
     }
 
