@@ -6,6 +6,7 @@ import com.tinyfoxes.translationhelper.subFolder
 import com.tinyfoxes.translationhelper.targetLangCode
 import com.tinyfoxes.translationhelper.util.s
 import java.awt.Dimension
+import java.awt.GridLayout
 import javax.swing.JFileChooser
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -145,8 +146,8 @@ class UiMain {
 
     private fun initEmptyBody() {
         val label = JLabel(s("[ui]Open root folder first!"))
-        frame.contentPane.removeAll()
-        frame.contentPane.add(label)
+        label.isOpaque = true
+        frame.contentPane = label
     }
 
     private fun initTranslationBody() {
@@ -158,11 +159,11 @@ class UiMain {
             JOptionPane.showMessageDialog(null, s("Error: one of the following isn't set: Root folder, sub folder, source language code or target language code. Please fix that first."))
             return
         }
-        val scrollPane = JScrollPane()
+
         val table = createTable()
-        scrollPane.add(table)
-        frame.contentPane.removeAll()
-        frame.contentPane.add(scrollPane)
+        val scrollPane = JScrollPane(table)
+        scrollPane.isOpaque = true
+        frame.contentPane = scrollPane
     }
 
     private fun createTable(): JTable {
@@ -173,7 +174,14 @@ class UiMain {
         ) {
             throw IllegalArgumentException()
         }
-        val table = JTable()
+
+        val columnNames = arrayOf(s("[ui]Keys"), sourceLangCode, targetLangCode)
+        val data = arrayOf(
+            arrayOf("A1","A2","A3"),
+            arrayOf("B1","B2","B3"),
+            arrayOf("C1","C2","C3"),
+        )
+        val table = JTable(data, columnNames)
         //Columns
 //        val columnModel = DefaultTableColumnModel()
 //        val columnKeys = TableColumn()
@@ -190,12 +198,13 @@ class UiMain {
 //        }
 //        table.columnModel = columnModel
         //Rows
-        val tableModel = DefaultTableModel()
-        tableModel.addColumn(s("[ui]Keys"))
-        tableModel.addColumn(sourceLangCode)
-        tableModel.addColumn(targetLangCode)
-        table.model = tableModel
+//        val tableModel = DefaultTableModel()
+//        tableModel.addColumn(s("[ui]Keys"))
+//        tableModel.addColumn(sourceLangCode)
+//        tableModel.addColumn(targetLangCode)
+//        table.model = tableModel
         //
+        table.preferredScrollableViewportSize = Dimension(600, 400)
         table.fillsViewportHeight = true
         return table
     }
