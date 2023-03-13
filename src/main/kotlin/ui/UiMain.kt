@@ -38,7 +38,7 @@ class UiMain {
         }
         frame = JFrame()
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
-        frame.size = Dimension(600, 400)
+        frame.size = Dimension(1200, 800)
         initMenu()
         initBody()
         frame.isVisible = true
@@ -78,7 +78,7 @@ class UiMain {
             val folderToOpen = fileChooser.selectedFile
             if (folderToOpen.exists() && folderToOpen.isDirectory) {
                 rootFolder = folderToOpen
-                JOptionPane.showMessageDialog(null, s("[ui]Root folder opened:\n") + folderToOpen.absolutePath)
+                JOptionPane.showMessageDialog(null, s("[ui]Root folder opened:") + "\n" + folderToOpen.absolutePath)
 
                 if (subFolder == null) {
                     openSubFolder()
@@ -104,7 +104,7 @@ class UiMain {
             val folderToOpen = fileChooser.selectedFile
             if (folderToOpen.exists() && folderToOpen.isDirectory) {
                 subFolder = folderToOpen.name
-                JOptionPane.showMessageDialog(null, s("[ui]Sub folder opened:\n") + folderToOpen.name)
+                JOptionPane.showMessageDialog(null, s("[ui]Sub folder opened:") + "\n" + folderToOpen.name)
             }
         }
     }
@@ -191,7 +191,7 @@ class UiMain {
         val myTableModel = MyTableModel(sourceStrings, targetStrings)
         table.model = myTableModel
         //
-        table.preferredScrollableViewportSize = Dimension(1024, 768)
+        table.preferredScrollableViewportSize = Dimension(1200, 800)
         table.fillsViewportHeight = true
         return table
     }

@@ -114,6 +114,6 @@ object Util {
                 fileLines[(ts.linenumber-1)] = "${ts.key}=${ts.translation}"
             }
         }
-        //Files.write(file.toPath(), fileLines)
+        Files.write(file.toPath(), fileLines)
     }
 }
