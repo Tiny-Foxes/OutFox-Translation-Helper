@@ -1,12 +1,13 @@
 package com.tinyfoxes.translationhelper.ui
 
+import com.tinyfoxes.translationhelper.model.TranslationString
 import com.tinyfoxes.translationhelper.rootFolder
 import com.tinyfoxes.translationhelper.sourceLangCode
 import com.tinyfoxes.translationhelper.subFolder
 import com.tinyfoxes.translationhelper.targetLangCode
+import com.tinyfoxes.translationhelper.util.Util
 import com.tinyfoxes.translationhelper.util.s
 import java.awt.Dimension
-import java.awt.GridLayout
 import javax.swing.JFileChooser
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -17,11 +18,13 @@ import javax.swing.JOptionPane
 import javax.swing.JScrollPane
 import javax.swing.JTable
 import javax.swing.UIManager
+import javax.swing.event.TableModelListener
 import javax.swing.table.*
 import kotlin.system.exitProcess
 
 class UiMain {
     lateinit var frame: JFrame
+    lateinit var table: JTable
 
     init {
         initUI()
@@ -88,7 +91,6 @@ class UiMain {
                 if (targetLangCode == null) {
                     setTargetLangCode()
                 }
-                //
             }
         }
     }
@@ -120,12 +122,22 @@ class UiMain {
     }
 
     private fun save() {
-        if (rootFolder == null || subFolder == null) return
-        //TODO: save
+        val answer = JOptionPane.showConfirmDialog(null, s("[ui]Save? (this will overwrite existing data)"))
+        if (answer != JOptionPane.YES_OPTION) {
+            return
+        }
+        val safeRootFolder = rootFolder ?: return
+        val safeSubFolder = subFolder ?: return
+        val safeTargetLangCode = targetLangCode ?: return
+        //
+        val myTableModel = table.model as MyTableModel
+        val updatedTranslations = myTableModel.getUpdatedTargetTranslationStrings()
+        //
+        Util.saveTranslationStrings(safeRootFolder, safeSubFolder, safeTargetLangCode, updatedTranslations)
     }
 
     private fun preferences() {
-        //TODO: preferences
+        JOptionPane.showMessageDialog(null, s("[ui]Change preferences via CLI"))
     }
 
     private fun exit() {
@@ -156,7 +168,7 @@ class UiMain {
             || sourceLangCode == null
             || targetLangCode == null
         ) {
-            JOptionPane.showMessageDialog(null, s("Error: one of the following isn't set: Root folder, sub folder, source language code or target language code. Please fix that first."))
+            JOptionPane.showMessageDialog(null, s("[ui]Error: one of the following isn't set: Root folder, sub folder, source language code or target language code. Please fix that first."))
             return
         }
 
@@ -166,46 +178,84 @@ class UiMain {
         frame.contentPane = scrollPane
     }
 
-    private fun createTable(): JTable {
-        if (rootFolder == null
-            || subFolder == null
-            || sourceLangCode == null
-            || targetLangCode == null
-        ) {
-            throw IllegalArgumentException()
-        }
-
-        val columnNames = arrayOf(s("[ui]Keys"), sourceLangCode, targetLangCode)
-        val data = arrayOf(
-            arrayOf("A1","A2","A3"),
-            arrayOf("B1","B2","B3"),
-            arrayOf("C1","C2","C3"),
-        )
-        val table = JTable(data, columnNames)
-        //Columns
-//        val columnModel = DefaultTableColumnModel()
-//        val columnKeys = TableColumn()
-//        columnKeys.headerValue = s("[ui]Keys")
-//        columnModel.addColumn(columnKeys)
-//        val columnSourceLang = TableColumn()
-//        columnSourceLang.headerValue = sourceLangCode
-//        columnModel.addColumn(columnSourceLang)
-//        val columnTargetLang = TableColumn()
-//        columnTargetLang.headerValue = targetLangCode
-//        columnModel.addColumn(columnTargetLang)
-//        for (column in columnModel.columns) {
-//            column.minWidth = 50
-//        }
-//        table.columnModel = columnModel
-        //Rows
-//        val tableModel = DefaultTableModel()
-//        tableModel.addColumn(s("[ui]Keys"))
-//        tableModel.addColumn(sourceLangCode)
-//        tableModel.addColumn(targetLangCode)
-//        table.model = tableModel
+    private fun createTable(): JTable? {
+        val safeRootFolder = rootFolder ?: return null
+        val safeSubFolder = subFolder ?: return null
+        val safeSourceLangCode = sourceLangCode ?: return null
+        val safeTargetLangCode = targetLangCode ?: return null
         //
-        table.preferredScrollableViewportSize = Dimension(600, 400)
+        val sourceStrings = Util.loadTranslationStrings(safeRootFolder, safeSubFolder, safeSourceLangCode)
+        val targetStrings = Util.loadTranslationStrings(safeRootFolder, safeSubFolder, safeTargetLangCode)
+        //
+        table = JTable()
+        val myTableModel = MyTableModel(sourceStrings, targetStrings)
+        table.model = myTableModel
+        //
+        table.preferredScrollableViewportSize = Dimension(1024, 768)
         table.fillsViewportHeight = true
         return table
+    }
+
+    class MyTableModel(
+        val sourceStrings: List<TranslationString>,
+        val targetStrings: List<TranslationString>
+    ) : TableModel {
+        private val columnNames = arrayOf(s("[ui]Keys"), "${s("[ui]Source")} $sourceLangCode", "${s("[ui]Target")} $targetLangCode")
+        private var updatedTargetStrings = targetStrings.toMutableList()
+
+        fun getUpdatedTargetTranslationStrings(): List<TranslationString> {
+            return updatedTargetStrings
+        }
+
+        override fun getRowCount(): Int {
+            return sourceStrings.size
+        }
+
+        override fun getColumnCount(): Int {
+            return columnNames.size
+        }
+
+        override fun getColumnName(columnIndex: Int): String {
+            return columnNames[columnIndex]
+        }
+
+        override fun getColumnClass(columnIndex: Int): Class<*> {
+            return String::class.java
+        }
+
+        override fun isCellEditable(rowIndex: Int, columnIndex: Int): Boolean {
+            return (columnIndex == 2) //only target lang is editable
+        }
+
+        override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
+            return when (columnIndex) {
+                0 -> sourceStrings[rowIndex].toId()
+                1 -> sourceStrings[rowIndex].translation
+                2 -> updatedTargetStrings.firstOrNull { ts -> ts.toId() == sourceStrings[rowIndex].toId() }?.translation ?: ""
+                else -> ""
+            }
+        }
+
+        override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int) {
+            //TranslationStrings are immutable, so remove and add new one.
+            val og = updatedTargetStrings.firstOrNull { ts -> ts.toId() == sourceStrings[rowIndex].toId() }
+            if (og == null) {
+                val temp = TranslationString.idToSectionAndKey(sourceStrings[rowIndex].toId()) ?: return
+                val added = TranslationString(temp[0], temp[1], aValue?.toString() ?: "", -1)
+                updatedTargetStrings.add(added)
+            } else {
+                updatedTargetStrings.remove(og)
+                val updated = TranslationString(og.section, og.key, aValue.toString(), og.linenumber)
+                updatedTargetStrings.add(updated)
+            }
+        }
+
+        override fun addTableModelListener(l: TableModelListener?) {
+            //TODO("Not yet implemented")
+        }
+
+        override fun removeTableModelListener(l: TableModelListener?) {
+            //TODO("Not yet implemented")
+        }
     }
 }

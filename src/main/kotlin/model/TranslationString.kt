@@ -17,4 +17,12 @@ data class TranslationString(val section: String?, val key: String, val translat
     fun toId(): String {
         return "[$section]$key"
     }
+
+    companion object {
+        fun idToSectionAndKey(id: String) : Array<String>? {
+            val regex = Regex("[(.+)](.+)")
+            val results = regex.find(id) ?: return null
+            return arrayOf(results.groupValues[1], results.groupValues[2])
+        }
+    }
 }
