@@ -104,10 +104,16 @@ object Util {
         //
         val file = File(rootFolder, "${subFolder}${System.getProperty("file.separator")}${langCode}.ini")
         val fileLines = Files.readAllLines(file.toPath())
+        val addedSections = mutableListOf<String>()
         changedStrings.forEach { ts ->
             if (ts.linenumber == -1 || ts.linenumber > fileLines.size - 1) {
                 //Added one
-                fileLines.add("${ts.key}=${ts.translation}")
+                if (ogStrings.firstOrNull {ogTs -> ogTs.section == ts.section } == null && !addedSections.contains(ts.section)) {
+                    //Check if we need to add section-header
+                    fileLines.add("[${ts.section}]")
+                    addedSections.add(ts.section!!) //Don't add twice
+                }
+                fileLines.add("${ts.key}=${ts.translation}") //add to file
             } else {
                 //Updated one
                 // array is zero based, line numbers are one based.
