@@ -8,6 +8,7 @@ import com.tinyfoxes.translationhelper.targetLangCode
 import com.tinyfoxes.translationhelper.util.Util
 import com.tinyfoxes.translationhelper.util.s
 import java.awt.Dimension
+import java.io.File
 import javax.swing.JFileChooser
 import javax.swing.JFrame
 import javax.swing.JLabel
@@ -77,6 +78,9 @@ class UiMain {
         if (answer == JFileChooser.APPROVE_OPTION) {
             val folderToOpen = fileChooser.selectedFile
             if (folderToOpen.exists() && folderToOpen.isDirectory) {
+                if (folderToOpen != rootFolder) {
+                    subFolder = null //reset
+                }
                 rootFolder = folderToOpen
                 JOptionPane.showMessageDialog(null, s("[ui]Root folder opened:") + "\n" + folderToOpen.absolutePath)
 
@@ -91,6 +95,8 @@ class UiMain {
                 if (targetLangCode == null) {
                     setTargetLangCode()
                 }
+
+                //todo: make sure table refreshes after loading different folder.
             }
         }
     }
@@ -98,6 +104,7 @@ class UiMain {
     private fun openSubFolder() {
         val fileChooser = JFileChooser()
         fileChooser.dialogTitle = s("[ui]Open sub folder")
+        fileChooser.currentDirectory = File(rootFolder!!.absolutePath)
         fileChooser.fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
         val answer = fileChooser.showOpenDialog(null)
         if (answer == JFileChooser.APPROVE_OPTION) {
